@@ -94,7 +94,6 @@ jobs:
           else
             gh pr create --base "$develop" \
               --title "Sync from $main_branch to $develop" \
-              # --label 'kind/internal' \
               --body "$pr_body"
           fi
       - name: Add PR comment - On Failure
