@@ -40,7 +40,7 @@ jobs:
         run: |
           sync_branch="${{ steps.calculate-branches.outputs.SYNC_BRANCH }}"
           if [[ -n $(git ls-remote --heads origin $sync_branch) ]]; then
-            pull_request=$(gh api ·/repos/${{ github.repository }}/pulls" | jq -r ".[] | select(.head.ref==\"sync_branch\") | .number")
+            pull_request=$(gh api "/repos/${{ github.repository }}/pulls" | jq -r ".[] | select(.head.ref==\"$sync_branch\") | .number")
             echo "PULL_REQUEST=$pull_request" >> "$GITHUB_OUTPUT"
           fi
       
