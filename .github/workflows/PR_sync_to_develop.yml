@@ -81,6 +81,7 @@ jobs:
       - name: Create Automated PR
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN_PUSH }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           develop="${{ steps.calculate-branches.outputs.DEVELOP_BRANCH }}"
           pull_request="${{ steps.get-repo-info.outputs.number }}"
