@@ -41,6 +41,7 @@ jobs:
           if [[ -n $(git ls-remote --heads origin $sync_branch) ]]; then
             pull_request=$(gh api "/repos/${{ github.repository }}/pulls" | jq -r ".[] | select(.head.ref==\"$sync_branch\") | .number")
             echo "PULL_REQUEST=$pull_request" >> "$GITHUB_OUTPUT"
+            echo "PULL_REQUEST=$pull_request"
           fi
       - name: Commit changes
         id: commit
@@ -81,6 +82,7 @@ jobs:
       - name: Create Automated PR
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN_PUSH }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           develop="${{ steps.calculate-branches.outputs.DEVELOP_BRANCH }}"
           pull_request="${{ steps.get-repo-info.outputs.number }}"
