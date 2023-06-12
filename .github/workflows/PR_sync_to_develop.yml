@@ -45,7 +45,7 @@ jobs:
       - name: Commit changes
         id: commit
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN}}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN_PUSH }}
         run: |
           develop="${{ steps.calculate-branches.outputs.DEVELOP_BRANCH }}"
           if [[ -z $(git ls-remote --heads origin $develop) ]]; then
@@ -69,7 +69,7 @@ jobs:
       - name: Create PR body
         id: pr-body
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN_PUSH }}
         run: |
           pr_body="**Automated Pull Request** related to:"
           pr_body="$pr_body"$'\n'"- #${{ github.event.pull_request.number }}"
