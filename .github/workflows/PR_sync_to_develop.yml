@@ -12,8 +12,8 @@ jobs:
     timeout-minutes: 30
     runs-on: ubuntu-22.04
     steps:
-      - name: Calculate SYNC, DEVELOP and MAIN branches
-        id: sync-branch
+      - name: Calculate sync, develop and main branches
+        id: calculate-branches
         run: |
           BASELINE_BRANCH=${{ github.base_ref }}
           DEVELOP_BRANCH=${BASELINE_BRANCH/main/develop}
@@ -24,5 +24,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
       - name: Print values
         id: print-values
-        run: echo "${{join(steps.sync-branch.outputs.*, '\n')}}"
-        
+        run: |
+          echo "DEVELOP_BRANCH=${{ steps.calculate-branches.outputs.DEVELOP_BRANCH }}"
+          echo "SYNC_BRANCH=${{ steps.calculate-branches.outputs.SYNC_BRANCH }}"
+          echo "MAIN_BRANCH=${{ steps.calculate-branches.outputs.MAIN_BRANCH }}"
