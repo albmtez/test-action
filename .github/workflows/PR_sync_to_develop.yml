@@ -3,7 +3,7 @@ name: PR-sync-to-develop
 
 on:
   pull_request:
-    types: [opened, closed]
+    types: [closed]
     branches: ['main', 'main-*']
 
 jobs:
