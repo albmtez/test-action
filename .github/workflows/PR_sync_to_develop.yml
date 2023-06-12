@@ -23,7 +23,6 @@ jobs:
             echo "MAIN_BRANCH=$BASELINE_BRANCH"
           } >> "$GITHUB_OUTPUT"
       - name: Print calculated branches
-        id: print-values
         run: |
           echo "DEVELOP_BRANCH=${{ steps.calculate-branches.outputs.DEVELOP_BRANCH }}"
           echo "SYNC_BRANCH=${{ steps.calculate-branches.outputs.SYNC_BRANCH }}"
@@ -43,4 +42,65 @@ jobs:
             pull_request=$(gh api "/repos/${{ github.repository }}/pulls" | jq -r ".[] | select(.head.ref==\"$sync_branch\") | .number")
             echo "PULL_REQUEST=$pull_request" >> "$GITHUB_OUTPUT"
           fi
-      
+      - name: Commit changes
+        id: commit
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN}}
+        run: |
+          develop="${{ steps.calculate-branches.outputs.DEVELOP_BRANCH }}"
+          if [[ -z $(git ls-remote --heads origin $develop) ]]; then
+            # Avoid creating sync PR if the corresponding development branch does not exist
+            echo "The $develop branch does not exist in remote. Skipping the creation of the sync PR"
+          else
+            sync_branch="${{ steps.calculate-branches.outputs.SYNC_BRANCH }}"
+            main_branch="${{ steps.calculate-branches.outputs.MAIN_BRANCH }}"
+
+            if [[ -n $(git ls-remote --heads origin $sync_branch) ]]; then
+              git checkout "$sync_branch"
+              git rebase $main_branch
+              git push --no-verify -u origin HEAD
+              echo "EXIST_BRANCH=True" >> "$GITHUB_OUTPUT"
+            else
+              git checkout -b "$sync_branch"
+              git push --no-verify -u origin HEAD
+              echo "EXIST_BRANCH=False" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+      - name: Create PR body
+        id: pr-body
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          pr_body="**Automated Pull Request** related to:"
+          pr_body="$pr_body"$'\n'"- #${{ github.event.pull_request.number }}"
+
+          delimiter="$(openssl rand -hex 8)"
+          echo "PR_BODY<<${delimiter}" >> "$GITHUB_OUTPUT"
+          echo "$pr_body" >> "$GITHUB_OUTPUT"
+          echo "${delimiter}" >> "${GITHUB_OUTPUT}"
+      - name: Create Automated PR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          develop="${{ steps.calculate-branches.outputs.DEVELOP_BRANCH }}"
+          pull_request="${{ steps.get-repo-info.outputs.number }}"
+          main_branch="${{ steps.calculate-branches.outputs.MAIN_BRANCH }}"
+          pr_body="${{ steps.pr-body.outputs.PR_BODY }}"
+
+          if [[ $pull_request != "" ]]; then
+              gh pr edit $pull_request -b "$pr_body"
+          else
+            gh pr create --base "$develop" \
+              --title "Sync from $main_branch to $develop" \
+              --label 'kind/internal' \
+              --body "$pr_body"
+          fi
+      - name: Add PR comment - On Failure
+        if: failure()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr comment ${{ github.event.number }} --body "
+          ### :exclamation: :exclamation: :exclamation: Sync to develop failure
+          - See the [workflow log](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}).
+          "
