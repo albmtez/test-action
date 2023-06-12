@@ -1,0 +1,28 @@
+---
+name: PR-sync-to-develop
+
+on:
+  pull_request:
+    types: [opened, closed]
+    branches: ['main', 'main-*']
+
+jobs:
+  sync-to-develop:
+    name: Sync To Develop branch
+    timeout-minutes: 30
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Calculate SYNC, DEVELOP and MAIN branches
+        id: sync-branch
+        run: |
+          BASELINE_BRANCH=${{ github.base_ref }}
+          DEVELOP_BRANCH=${BASELINE_BRANCH/main/develop}
+          {
+            echo "DEVELOP_BRANCH=$DEVELOP_BRANCH"
+            echo "SYNC_BRANCH=automated/sync-from-$BASELINE_BRANCH-to-$DEVELOP_BRANCH"
+            echo "MAIN_BRANCH=$BASELINE_BRANCH"
+          } >> "$GITHUB_OUTPUT"
+      - name: Print values
+        id: print-values
+        run: echo "${{join(steps.sync-branch.outputs.*, '\n')}}"
+        
