@@ -22,9 +22,25 @@ jobs:
             echo "SYNC_BRANCH=automated/sync-from-$BASELINE_BRANCH-to-$DEVELOP_BRANCH"
             echo "MAIN_BRANCH=$BASELINE_BRANCH"
           } >> "$GITHUB_OUTPUT"
-      - name: Print values
+      - name: Print calculated branches
         id: print-values
         run: |
           echo "DEVELOP_BRANCH=${{ steps.calculate-branches.outputs.DEVELOP_BRANCH }}"
           echo "SYNC_BRANCH=${{ steps.calculate-branches.outputs.SYNC_BRANCH }}"
           echo "MAIN_BRANCH=${{ steps.calculate-branches.outputs.MAIN_BRANCH }}"
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: ${{ github.base_ref }}
+      - name: Get existant branches and pull requests from repository
+        id: get-repo-info
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          sync_branch="${{ steps.calculate-branches.outputs.SYNC_BRANCH }}"
+          if [[ -n $(git ls-remote --heads origin $sync_branch) ]]; then
+            pull_request=$(gh api ·/repos/${{ github.repository }}/pulls" | jq -r ".[] | select(.head.ref==\"sync_branch\") | .number")
+            echo "PULL_REQUEST=$pull_request" >> "$GITHUB_OUTPUT"
+          fi
+      
