@@ -69,7 +69,7 @@ jobs:
       - name: Create PR body
         id: pr-body
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN_PUSH }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           pr_body="**Automated Pull Request** related to:"
           pr_body="$pr_body"$'\n'"- #${{ github.event.pull_request.number }}"
@@ -80,7 +80,7 @@ jobs:
           echo "${delimiter}" >> "${GITHUB_OUTPUT}"
       - name: Create Automated PR
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN_PUSH }}
         run: |
           develop="${{ steps.calculate-branches.outputs.DEVELOP_BRANCH }}"
           pull_request="${{ steps.get-repo-info.outputs.number }}"
@@ -92,7 +92,7 @@ jobs:
           else
             gh pr create --base "$develop" \
               --title "Sync from $main_branch to $develop" \
-              --label 'kind/internal' \
+              # --label 'kind/internal' \
               --body "$pr_body"
           fi
       - name: Add PR comment - On Failure
