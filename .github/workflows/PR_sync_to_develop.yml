@@ -85,7 +85,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           develop="${{ steps.calculate-branches.outputs.DEVELOP_BRANCH }}"
-          pull_request="${{ steps.get-repo-info.outputs.number }}"
+          pull_request="${{ steps.get-repo-info.outputs.pull_request }}"
           main_branch="${{ steps.calculate-branches.outputs.MAIN_BRANCH }}"
           pr_body="${{ steps.pr-body.outputs.PR_BODY }}"
 
